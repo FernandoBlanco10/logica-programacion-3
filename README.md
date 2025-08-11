@@ -13,3 +13,6 @@ Este repositorio contiene un proyecto sencillo que calcula el **factorial de un 
 - **HTML** — Estructura de la página web
 - **CSS** — Estilos visuales (si incluido)
 - **JavaScript** — Cálculo del factorial y manipulación del DOM
+
+## Link
+https://fernandoblanco10.github.io/logica-programacion-3/
