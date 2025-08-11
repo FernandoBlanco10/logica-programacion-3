@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Factorial — Logica Programacion 3</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg1:#071A52;
+      --bg2:#0B3B8C;
+      --accent:#00E0FF;
+      --card:#08224F;
+      --glass: rgba(255,255,255,0.04);
+      --text:#E6F0FF;
+      --muted:rgba(230,240,255,0.7);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{
+      background:linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%);
+      color:var(--text);
+      display:flex;align-items:center;justify-content:center;padding:32px;
+    }
+    .container{
+      width:100%;max-width:920px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:28px;box-shadow:0 10px 30px rgba(2,6,23,0.6);backdrop-filter: blur(6px);
+      border:1px solid rgba(255,255,255,0.04);
+    }
+    header{display:flex;gap:16px;align-items:center}
+    .logo{
+      width:50px;height:50px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#3b82f6);display:flex;align-items:center;justify-content:center;font-weight:800;color:#002;
+      box-shadow:0 6px 24px rgba(0,0,0,0.45), inset 0 -6px 18px rgba(255,255,255,0.03);
+    }
+    h1{font-size:20px;margin:0}
+    p.lead{margin:6px 0 22px;color:var(--muted);font-size:14px}
+    .card{background:linear-gradient(180deg,var(--card), rgba(8,34,79,0.85));padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+
+    .row{display:flex;gap:16px;align-items:center}
+    .grow{flex:1}
+
+    input[type="text"]{
+      width:100%;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:var(--glass);color:var(--text);font-size:15px;outline:none
+    }
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button{
+      padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,#0EA5E9,#00E0FF);color:#012;cursor:pointer;font-weight:600;box-shadow:0 6px 18px rgba(3,7,27,0.45);
+    }
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+    .output{margin-top:18px;padding:14px;border-radius:10px;background:linear-gradient(90deg, rgba(0,0,0,0.18), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.03);min-height:54px;display:flex;align-items:center}
+    .error{color:#FFBABA;background:rgba(255,90,90,0.06);padding:10px;border-radius:8px;margin-top:12px;border:1px solid rgba(255,90,90,0.12)}
+    footer{margin-top:16px;color:var(--muted);font-size:13px}
+
+    .hint{margin-top:8px;color:var(--muted);font-size:13px}
+
+    @media (max-width:640px){.row{flex-direction:column;align-items:stretch}.controls{flex-direction:column}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">!</div>
+      <div>
+        <h1>Calduladora - Factorial</h1>
+        <p class="lead">Introduce un número y el programa calculará su factorial.
+    </header>
+
+    <section class="card" aria-labelledby="main-title">
+      <label for="numero"><strong>Ingresa un número entero (no negativo)</strong></label>
+      <div class="row" style="margin-top:8px;">
+        <input id="numero" type="text" placeholder="Ejemplo: 5" aria-label="Número" />
+        <div style="width:1px"></div>
+      </div>
+
+      <div class="controls">
+        <button id="calcularBtn">Calcular factorial</button>
+      </div>
+
+      <div id="error" class="error" style="display:none"></div>
+      <div id="output" class="output">Resultado: <strong id="resultado" style="margin-left:10px">—</strong></div>
+
+      <p class="hint">Prueba las entradas 5 → 120, 6 → 720, y otros números que se te ocurran.</p>
+
+    </section>
+  </div>
+
+  <script>
+    // Función para calcular factorial usando BigInt para valores grandes
+    function factorialBigInt(n){
+      // n es Number (entero no negativo)
+      if(n === 0 || n === 1) return 1n;
+      let res = 1n;
+      for(let i=2n;i<=BigInt(n);i++) res *= i;
+      return res;
+    }
+
+    const input = document.getElementById('numero');
+    const calcBtn = document.getElementById('calcularBtn');
+    const promptBtn = document.getElementById('promptBtn');
+    const limpiarBtn = document.getElementById('limpiarBtn');
+    const resultadoEl = document.getElementById('resultado');
+    const errorEl = document.getElementById('error');
+    const outputEl = document.getElementById('output');
+
+    function mostrarError(msg){
+      errorEl.style.display = 'block';
+      errorEl.textContent = msg;
+      resultadoEl.textContent = '—';
+    }
+    function ocultarError(){ errorEl.style.display = 'none'; }
+
+    function validarYParsear(valor){
+      // Quitar espacios
+      const v = String(valor).trim();
+      // Intentar convertir a número
+      if(v === '') return {ok:false,reason:'No has ingresado ningún valor.'};
+
+      // Permitir números enteros escritos con o sin signo. No aceptamos decimales.
+      // Comprobar que sea un entero usando expresión regular
+      const intRegex = /^-?\d+$/;
+      if(!intRegex.test(v)) return {ok:false,reason:'Por favor introduce un número entero (sin decimales).'};
+
+      // Parsear
+      const num = Number(v);
+      if(Number.isNaN(num)) return {ok:false,reason:'El valor no es un número válido.'};
+
+      // Verificar que sea >= 0 (no negativos para factorial definido aquí)
+      if(!Number.isInteger(num) || num < 0) return {ok:false,reason:'Introduce un entero no negativo (0,1,2...).'};
+
+      // Evitar números extremadamente grandes que puedan tardar mucho (limite razonable: 5000)
+      if(num > 5000) return {ok:false,reason:'El número es demasiado grande para calcularlo aquí. Prueba un número menor (p.ej. <= 5000).'};
+
+      return {ok:true,value:num};
+    }
+
+    function calcularYMostrar(valor){
+      ocultarError();
+      const valid = validarYParsear(valor);
+      if(!valid.ok){
+        mostrarError(valid.reason + ' Intenta de nuevo.');
+        return false;
+      }
+      const n = valid.value;
+      // Calcular factorial con BigInt
+      const fact = factorialBigInt(n);
+      // Mostrar en DOM
+      resultadoEl.textContent = fact.toString();
+      // También imprimir en consola
+      console.log(`Entrada: ${n} → Factorial: ${fact.toString()}`);
+      return true;
+    }
+
+    calcBtn.addEventListener('click', ()=>{
+      calcularYMostrar(input.value);
+    });
+
+    promptBtn.addEventListener('click', ()=>{
+      // Usar prompt en bucle hasta recibir entrada válida o cancelar
+      let keep = true;
+      while(keep){
+        const respuesta = prompt('Introduce un número entero no negativo para calcular su factorial:');
+        if(respuesta === null){ // el usuario canceló
+          break;
+        }
+        const ok = calcularYMostrar(respuesta);
+        if(ok) { input.value = String(respuesta).trim(); break; }
+        // si no fue ok, el bucle continúa y volverá a preguntar
+      }
+    });
+
+    limpiarBtn.addEventListener('click', ()=>{
+      input.value = '';
+      resultadoEl.textContent = '—';
+      ocultarError();
+    });
+
+    // Atajo: Enter en el input para calcular
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') calcBtn.click(); });
+
+    // Pruebas rápidas (mostradas en consola) — ejemplos solicitados
+    console.log('Pruebas de ejemplo: 5 →', (function(){ const f = factorialBigInt(5); return f.toString(); })());
+    console.log('Pruebas de ejemplo: 6 →', (function(){ const f = factorialBigInt(6); return f.toString(); })());
+  </script>
+</body>
+</html>
